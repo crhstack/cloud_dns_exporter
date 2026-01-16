@@ -10,7 +10,7 @@ import (
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	domain "github.com/alibabacloud-go/domain-20180129/v4/client"
 	"github.com/alibabacloud-go/tea/tea"
-	"github.com/golang-module/carbon/v2"
+	"github.com/dromara/carbon/v2"
 
 	"github.com/eryajf/cloud_dns_exporter/public/logger"
 
@@ -115,6 +115,7 @@ func (a *AliyunDNS) ListRecords() ([]Record, error) {
 	}
 	results := make(map[string][]*alidns.DescribeDomainRecordsResponseBodyDomainRecordsRecord)
 	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 	for _, domain := range domains {
 		wg.Add(1)
 		go func(domain string) {

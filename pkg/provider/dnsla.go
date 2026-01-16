@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/eryajf/cloud_dns_exporter/dnslib/dnsla"
 	"github.com/eryajf/cloud_dns_exporter/public"
 	"github.com/eryajf/cloud_dns_exporter/public/logger"
-	"github.com/golang-module/carbon/v2"
 )
 
 type DNSLaDNS struct {
@@ -100,6 +100,7 @@ func (d *DNSLaDNS) ListRecords() ([]Record, error) {
 	}
 	results := make(map[string][]dnsla.Record)
 	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for _, domain := range domains {
 		wg.Add(1)
 		go func(domainName, domainId string) {

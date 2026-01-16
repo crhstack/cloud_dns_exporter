@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"strings"
@@ -78,7 +79,7 @@ func GetCertInfo(record provider.GetRecordCertReq) (certInfo provider.RecordCert
 	if err != nil {
 		return certInfo, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	certs := conn.ConnectionState().PeerCertificates
 	if len(certs) == 0 {
 		return certInfo, fmt.Errorf("未找到证书")
@@ -92,7 +93,8 @@ func GetCertInfo(record provider.GetRecordCertReq) (certInfo provider.RecordCert
 
 	cert := certs[0]
 	certInfo.SubjectCommonName = cert.Subject.CommonName
-	if strings.Contains(certInfo.SubjectCommonName, record.DomainName) {
+	certInfo.IssuerCommonName = cert.Issuer.CommonName
+	if strings.Contains(certInfo.SubjectCommonName, record.DomainName) || checkCertMatched(record, cert) {
 		certInfo.CertMatched = true
 	} else {
 		certInfo.CertMatched = false
@@ -104,8 +106,6 @@ func GetCertInfo(record provider.GetRecordCertReq) (certInfo provider.RecordCert
 	if len(cert.Subject.OrganizationalUnit) > 0 {
 		certInfo.SubjectOrganizationalUnit = cert.Subject.OrganizationalUnit[0]
 	}
-	// 从证书中提取颁发者信息
-	certInfo.IssuerCommonName = cert.Issuer.CommonName
 	if len(cert.Issuer.Organization) > 0 {
 		certInfo.IssuerOrganization = cert.Issuer.Organization[0]
 	}
@@ -158,6 +158,17 @@ func isPortOpen(domain string) bool {
 	if err != nil {
 		return false
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	return true
+}
+
+// checkCertMatched 检查证书是否匹配
+// https://github.com/opsre/cloud_dns_exporter/issues/25
+func checkCertMatched(record provider.GetRecordCertReq, cert *x509.Certificate) bool {
+	for _, name := range cert.DNSNames {
+		if strings.Contains(name, record.DomainName) {
+			return true
+		}
+	}
+	return false
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"runtime"
 
@@ -54,7 +55,8 @@ var rootCmd = &cobra.Command{
 }
 
 func RunServer() {
-	metrics := export.NewMetrics("")
+	osArch := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	metrics := export.NewMetrics("", Version, GitCommit, runtime.Version(), osArch, BuildTime)
 	registory := prometheus.NewRegistry()
 	registory.MustRegister(metrics)
 

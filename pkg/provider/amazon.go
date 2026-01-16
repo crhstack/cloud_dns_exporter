@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go-v2/service/route53domains"
+	"github.com/dromara/carbon/v2"
 	"github.com/eryajf/cloud_dns_exporter/public"
-	"github.com/golang-module/carbon/v2"
 	"golang.org/x/net/context"
 )
 
@@ -66,6 +66,7 @@ func (a *AmazonDNS) ListDomains() ([]Domain, error) {
 		return nil, err
 	}
 	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 	for _, domain := range domains {
 		wg.Add(1)
 		go func(domain types.HostedZone) {
